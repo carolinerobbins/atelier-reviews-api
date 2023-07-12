@@ -3,28 +3,30 @@ const models = require("../models/reviews");
 const controllers = {
   getReviews: async (req,res) => {
     try {
-      const data = await models.getReviews();
+      const { product_id, page = 0, count = 5 } = req.query;
+      const data = await models.getReviews(product_id);
       let final = {
-        product: req.params.product_id,
-        page: req.params.page || 0,
-        count: req.params.count || 5,
-        results: data //check if array
+        product: product_id,
+        page: parseInt(page) || 0,
+        count: parseInt(count) || 5,
+        results: data.rows //check if array
       }
       res.send(final);
     } catch (err) {
       res.sendStatus(501);
     }
   },
-  getMeta: (req,res) => {
+  getMeta: async (req,res) => {
     try {
-      const data = await models.getMeta();
+      const { product_id } = req.query;
+      const data = await models.getMeta(product_id);
       let final = {
         product_id: req.params.product_id,
         ratings: {},
         recommended: {},
         characteristics: {}
       }
-      res.send(data);
+      res.send(final);
     } catch (err) {
       res.sendStatus(501);
     }

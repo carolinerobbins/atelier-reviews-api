@@ -1,19 +1,19 @@
 const pool = require('../db/db.js')
 
 const models = {
-  getReviews: () => {
+  getReviews: (product_id) => {
+    return pool.query(`SELECT * FROM reviews WHERE product_id = ${product_id};`)
+  },
+  getMeta: (product_id) => {
 
   },
-  getMeta: () => {
+  postReview: (review) => {
 
   },
-  postReview: () => {
+  putHelpful: (review_id) => {
 
   },
-  putHelpful: () => {
-
-  },
-  putReport: () => {
+  putReport: (review_id) => {
 
   }
 }

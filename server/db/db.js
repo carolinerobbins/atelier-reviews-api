@@ -7,4 +7,13 @@ const pool = new Pool({
   port: process.env.PGPORT,
 })
 
+pool.connect((err, client, release) => {
+  if (err) {
+    console.error('Error connecting to the database:', err);
+  } else {
+    console.log('Database pool connected!');
+    release(); 
+  }
+});
+
  module.exports=pool;

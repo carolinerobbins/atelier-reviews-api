@@ -6,6 +6,6 @@ const router = require("./routes/routes");
 app.use(express.json());
 app.use("/reviews", router);
 
-app.listen(port, () => {
+app.listen(process.env.PORT, () => {
   console.log(`Listening on port ${process.env.PORT}`)
 })
