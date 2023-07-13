@@ -9,7 +9,7 @@ const controllers = {
         product: product_id,
         page: parseInt(page) || 0,
         count: parseInt(count) || 5,
-        results: data.rows 
+        results: data.rows
       }
       res.send(final);
     } catch (err) {
@@ -20,10 +20,20 @@ const controllers = {
     try {
       const { product_id } = req.query;
       const data = await models.getMeta(product_id);
+      console.log(data);
       let final = {
         product_id: product_id,
-        ratings: {},
-        recommended: {},
+        ratings: {
+          '1' : data.oneStarCount,
+          '2' : data.twoStarCount,
+          '3' : data.threeStarCount,
+          '4' : data.fourStarCount,
+          '5' : data.fiveStarCount
+        },
+        recommended: {
+          true: data.recommendTrue,
+          false: data.recommendFalse
+        },
         characteristics: {}
       }
       res.send(final);
