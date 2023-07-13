@@ -9,7 +9,7 @@ const controllers = {
         product: product_id,
         page: parseInt(page) || 0,
         count: parseInt(count) || 5,
-        results: data.rows //check if array
+        results: data.rows 
       }
       res.send(final);
     } catch (err) {
@@ -21,7 +21,7 @@ const controllers = {
       const { product_id } = req.query;
       const data = await models.getMeta(product_id);
       let final = {
-        product_id: req.params.product_id,
+        product_id: product_id,
         ratings: {},
         recommended: {},
         characteristics: {}
@@ -33,7 +33,8 @@ const controllers = {
   },
   postReview: async (req, res) => {
     try {
-      const data = await models.postReview(req.body);
+      const data = await models.postReview(req.query);
+      console.log(data);
       res.sendStatus(201);
     } catch (err) {
       res.sendStatus(501);
