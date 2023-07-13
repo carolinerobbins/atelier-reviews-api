@@ -20,7 +20,6 @@ const controllers = {
     try {
       const { product_id } = req.query;
       const data = await models.getMeta(product_id);
-      console.log(data);
       let final = {
         product_id: product_id,
         ratings: {
@@ -44,7 +43,6 @@ const controllers = {
   postReview: async (req, res) => {
     try {
       const data = await models.postReview(req.query);
-      console.log(data);
       res.sendStatus(201);
     } catch (err) {
       res.sendStatus(501);
@@ -52,15 +50,15 @@ const controllers = {
   },
   putHelpful: async (req,res) => {
     try {
-      const data = await models.putHelpful(req.params.id);
-      res.sendStatus(201);
-    } catch (err) {
+      const data = await models.putHelpful(req.params.review_id);
       res.sendStatus(204);
+    } catch (err) {
+      res.sendStatus(501);
     }
   },
   putReport: async (req,res) => {
     try {
-      const data = await models.putReport(req.params.id);
+      const data = await models.putReport(req.params.review_id);
       res.sendStatus(204);
     } catch (err) {
       res.sendStatus(501);
