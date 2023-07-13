@@ -34,7 +34,7 @@ const controllers = {
           true: data.recommendTrue,
           false: data.recommendFalse
         },
-        characteristics: {}
+        characteristics: data.charObj
       }
       res.send(final);
     } catch (err) {

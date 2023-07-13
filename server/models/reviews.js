@@ -38,10 +38,23 @@ const models = {
         recommendFalse = result.rows[0].recommend_false;
 
         //get characteristics for specific product
-        return pool.query(`SELECT * FROM characteristics WHERE product_id=${product_id}`);
+        return pool.query(`SELECT ch.name AS name, AVG(cr.value) AS average_value, ch.id
+        FROM characteristics AS ch
+        JOIN characteristic_reviews AS cr ON cr.characteristic_id = ch.id
+        JOIN reviews AS r ON cr.review_id = r.id
+        WHERE r.product_id = '${product_id}'
+          AND ch.product_id = '${product_id}'
+        GROUP BY ch.name, ch.id;`);
       })
       .then(result => {
         charNames = result.rows;
+        charObj = {};
+        charNames.forEach((char) => {
+          charObj[char.name] = {
+            id: char.id,
+            value : char.average_value
+          }
+        });
         return {
           oneStarCount,
           twoStarCount,
@@ -50,10 +63,10 @@ const models = {
           fiveStarCount,
           recommendTrue,
           recommendFalse,
-          charNames
+          charObj
         };
       })
-      .catch(error => console.error("Error fetching metadata: ", error));
+      .catch(error => console.error(error))
   },
   postReview: (review) => {
     const { product_id, rating, summary, body, recommend, name, email } = review;
