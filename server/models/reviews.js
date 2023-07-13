@@ -42,7 +42,6 @@ const models = {
       })
       .then(result => {
         charNames = result.rows;
-        // Combine the results and return the final object
         return {
           oneStarCount,
           twoStarCount,
