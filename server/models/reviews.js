@@ -4,7 +4,7 @@ const models = {
   getReviews: (product_id) => {
     return pool.query(`SELECT * FROM reviews WHERE product_id = ${product_id};`)
   },
-  
+
   getMeta: (product_id) => {
 
   },
@@ -16,10 +16,11 @@ const models = {
     return pool.query(`INSERT INTO reviews (product_id, rating, summary, body, recommend, reported, reviewer_name, reviewer_email, response, helpfulness, date) VALUES ('${product_id}', '${rating}', '${summary}', '${body}', ${recommend}, false, '${reviewer_name}', '${reviewer_email}', null, 0, ${date})`);
   },
   putHelpful: (review_id) => {
-
+    return pool.query(`UPDATE reviews SET helpfulness = helpfulness + 1 WHERE review_id=${review_id}`);
   },
-  putReport: (review_id) => {
 
+  putReport: (review_id) => {
+    return pool.query(`UPDATE reviews SET reported = true WHERE review_id=${review_id}`);
   }
 }
 
