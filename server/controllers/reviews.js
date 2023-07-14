@@ -9,8 +9,9 @@ const controllers = {
         product: product_id,
         page: parseInt(page) || 0,
         count: parseInt(count) || 5,
-        results: data.rows
+        results: data
       }
+      console.log(data[1].photos)
       res.send(final);
     } catch (err) {
       res.sendStatus(501);
@@ -42,9 +43,14 @@ const controllers = {
   },
   postReview: async (req, res) => {
     try {
+      const { characteristics, url } = req.query;
       const data = await models.postReview(req.query);
+      let review_id = data.rows[0].id;
+      const photos = await models.postPhotos(review_id, url);
+      console.log(photos);
       res.sendStatus(201);
     } catch (err) {
+      console.error(err)
       res.sendStatus(501);
     }
   },

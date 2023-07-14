@@ -13,7 +13,7 @@ FROM '/Users/carolinerobbins/hackreactor/senior/data_sdc/characteristics.csv'
 DELIMITER ','
 CSV HEADER;
 
-COPY review_photos(id, review_id, url)
+COPY reviews_photos(id, review_id, url)
 FROM '/Users/carolinerobbins/hackreactor/senior/data_sdc/reviews_photos.csv'
 DELIMITER ','
 CSV HEADER;

@@ -1,8 +1,24 @@
 const pool = require('../db/db.js')
 
 const models = {
-  getReviews: (product_id) => {
-    return pool.query(`SELECT * FROM reviews WHERE product_id = ${product_id};`)
+  getReviews: async (product_id) => {
+    try {
+      const reviewsResult = await pool.query(`SELECT * FROM reviews WHERE product_id = ${product_id};`);
+      const reviews = reviewsResult.rows;
+
+      const reviewsWithPhotos = await Promise.all(
+        reviews.map(async (review) => {
+          const photosResult = await pool.query(`SELECT * FROM reviews_photos WHERE review_id = ${review.id}`);
+          const photos = photosResult.rows;
+          return { ...review, photos };
+        })
+      );
+
+      return reviewsWithPhotos;
+    } catch (error) {
+      console.error(error);
+      throw error;
+    }
   },
 
   getMeta: (product_id) => {
@@ -70,10 +86,12 @@ const models = {
   },
   postReview: (review) => {
     const { product_id, rating, summary, body, recommend, name, email } = review;
+    console.log(review);
     const date = new Date().getTime();
     const reviewer_name = name;
     const reviewer_email = email;
-    return pool.query(`INSERT INTO reviews (product_id, rating, summary, body, recommend, reported, reviewer_name, reviewer_email, response, helpfulness, date) VALUES ('${product_id}', '${rating}', '${summary}', '${body}', ${recommend}, false, '${reviewer_name}', '${reviewer_email}', null, 0, ${date})`);
+
+    return pool.query(`INSERT INTO reviews (product_id, rating, summary, body, recommend, reported, reviewer_name, reviewer_email, response, helpfulness, date) VALUES ('${product_id}', '${rating}', '${summary}', '${body}', ${recommend}, false, '${reviewer_name}', '${reviewer_email}', null, 0, ${date}) RETURNING id`);
   },
   putHelpful: (review_id) => {
     return pool.query(`UPDATE reviews SET helpfulness = (helpfulness + 1) WHERE id='${review_id}'`);
@@ -81,6 +99,10 @@ const models = {
 
   putReport: (review_id) => {
     return pool.query(`UPDATE reviews SET reported = true WHERE id='${review_id}'`);
+  },
+
+  postPhotos: (review_id, url) => {
+    return pool.query(`INSERT INTO reviews_photos (review_id, url) VALUES (${review_id}, '${url}') RETURNING id`);
   }
 }
 
