@@ -11,10 +11,9 @@ const controllers = {
         count: parseInt(count) || 5,
         results: data
       }
-      console.log(data[1].photos)
       res.send(final);
     } catch (err) {
-      res.sendStatus(501);
+      res.status(501).send('Cannot get reivews')
     }
   },
   getMeta: async (req,res) => {
@@ -38,7 +37,7 @@ const controllers = {
       }
       res.send(final);
     } catch (err) {
-      res.sendStatus(501);
+      res.status(501).send('Cannot get meta review data')
     }
   },
   postReview: async (req, res) => {
