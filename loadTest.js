@@ -4,24 +4,24 @@ import { sleep, check } from 'k6';
 const BASE_URL = 'http://localhost:3001';
 
 function getRandomProductId(min, max) {
-  return Math.floor(Math.random() * (max - min + 1)) + min;
+  return Math.floor(Math.random() * (max - min + 1));
 }
 
 export let options = {
   stages: [
-    { duration: '10s', target: 1 },    // 1 RPS
-    { duration: '20s', target: 10 },   // 10 RPS
-    { duration: '30s', target: 100 },  // 100 RPS
-    { duration: '1m', target: 1000 },  // 1000 RPS
+    { duration: '10s', target: 1 },
+    { duration: '20s', target: 10 },
+    { duration: '30s', target: 100 },
+    { duration: '1m', target: 1000 },
   ],
   thresholds: {
-    http_req_duration: ['p(95)<500'],  // Latency should be below 500ms
-    http_req_failed: ['rate<0.1'],     // Error rate should be below 10%
+    http_req_duration: ['p(95)<2000'],
+    http_req_failed: ['rate<0.01'],
   },
 };
 
 export default function () {
-  const productId = getRandomProductId(1, 5000);
+  const productId = getRandomProductId(1, 950072);
 
   let getReviewsRes = http.get(`${BASE_URL}/reviews?product_id=${productId}`);
   check(getReviewsRes, {

@@ -65,7 +65,7 @@ const models = {
         recommendTrue = result.rows[0].recommend_true;
         recommendFalse = result.rows[0].recommend_false;
 
-        //get characteristics for specific product
+        //get characteristics for specific product and avg value
         return pool.query(`SELECT ch.name AS name, AVG(cr.value) AS average_value, ch.id
         FROM characteristics AS ch
         JOIN characteristic_reviews AS cr ON cr.characteristic_id = ch.id
@@ -99,7 +99,6 @@ const models = {
   postReview: (review) => {
     const { product_id, rating, summary, body, recommend, name, email } =
       review;
-    console.log(review);
     const date = new Date().getTime();
     const reviewer_name = name;
     const reviewer_email = email;
@@ -122,9 +121,23 @@ const models = {
 
   postPhotos: (review_id, url) => {
     return pool.query(
-      `INSERT INTO reviews_photos (review_id, url) VALUES (${review_id}, '${url}') RETURNING id`
+      `INSERT INTO reviews_photos (review_id, url) VALUES (${review_id}, '${url}')`
     );
   },
+
+  postChars: (review_id, characteristics) => {
+    const promises = characteristics.map(({ name, value }) => {
+      return pool.query(
+        `INSERT INTO characteristic_reviews (characteristic_id, review_id, value)
+        VALUES ((SELECT id FROM characteristics WHERE name = '${name}'
+        AND product_id = (SELECT product_id FROM reviews WHERE review_id = ${review_id})),
+        ${review_id},
+        ${value})`
+        );
+    });
+
+    return Promise.all(promises);
+  }
 };
 
 module.exports = models;

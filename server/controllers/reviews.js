@@ -46,7 +46,7 @@ const controllers = {
       const data = await models.postReview(req.query);
       let review_id = data.rows[0].id;
       const photos = await models.postPhotos(review_id, url);
-      console.log(photos);
+      const chars = await models.postChars(review_id, characteristics);
       res.sendStatus(201);
     } catch (err) {
       console.error(err)
