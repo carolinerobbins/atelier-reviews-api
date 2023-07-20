@@ -3,6 +3,7 @@ const pool = require("../db/db.js");
 const models = {
   getReviews: async (product_id) => {
     try {
+      console.log('inside models:', product_id);
       const result = await pool.query(`SELECT
         reviews.*,
         COALESCE(
