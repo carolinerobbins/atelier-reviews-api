@@ -15,8 +15,8 @@ app.use(compression());
 app.use("/reviews", router);
 
 
-app.listen(process.env.PORT, () => {
-  console.log(`Listening on port ${process.env.PORT}`)
+app.listen(3001, () => {
+  console.log(`Listening on port 3001`)
 })
 
 module.exports = app;
