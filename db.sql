@@ -1,3 +1,5 @@
+CREATE DATABASE reviews
+
 CREATE TABLE reviews (
     product_id integer,
     rating integer,
