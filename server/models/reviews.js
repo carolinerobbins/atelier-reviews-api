@@ -3,7 +3,6 @@ const pool = require("../db/db.js");
 const models = {
   getReviews: async (product_id) => {
     try {
-      console.log('inside models:', product_id);
       const result = await pool.query(`SELECT
         reviews.*,
         COALESCE(
@@ -17,9 +16,7 @@ const models = {
       FROM reviews
       WHERE reviews.product_id = ${product_id};
     `);
-      const reviewsWithPhotos = result.rows;
-      console.log(reviewsWithPhotos);
-
+      const reviewsWithPhotos = result.rows;;
       return reviewsWithPhotos;
     } catch (error) {
       console.error(error);
