@@ -3,7 +3,6 @@ const models = require("../models/reviews");
 const controllers = {
   getReviews: async (req,res) => {
     try {
-      console.log('inside controllers:', product_id);
       const { product_id, page = 0, count = 5 } = req.query;
       const data = await models.getReviews(product_id);
       let final = {
