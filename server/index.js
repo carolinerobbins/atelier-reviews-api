@@ -1,11 +1,9 @@
-require('dotenv').config()
 const express = require('express');
 const app = express();
 const router = require("./routes/routes");
 const path = require('path');
 const cors = require('cors');
 const compression = require('compression');
-
 
 
 app.use(cors());;

@@ -32,49 +32,50 @@ const models = {
         fiveStarCount;
       let recommendTrue, recommendFalse;
       let charObj;
-
-      // Get star rating counts and recommend counts along with characteristics and average value
-      const queryResult = await pool.query(`
-        SELECT
+      console.log('inside models');
+      //get star rating counts and recommend counts
+      const ratingQueryResult = await pool.query(
+        `SELECT
           SUM(CASE WHEN rating = 1 THEN 1 ELSE 0 END) AS one_star_count,
           SUM(CASE WHEN rating = 2 THEN 1 ELSE 0 END) AS two_star_count,
           SUM(CASE WHEN rating = 3 THEN 1 ELSE 0 END) AS three_star_count,
           SUM(CASE WHEN rating = 4 THEN 1 ELSE 0 END) AS four_star_count,
           SUM(CASE WHEN rating = 5 THEN 1 ELSE 0 END) AS five_star_count,
           SUM(CASE WHEN recommend = true THEN 1 ELSE 0 END) AS recommend_true,
-          SUM(CASE WHEN recommend = false THEN 1 ELSE 0 END) AS recommend_false,
-          ch.name AS name,
-          AVG(cr.value) AS average_value,
-          ch.id
-        FROM reviews AS r
-        LEFT JOIN characteristic_reviews AS cr ON cr.review_id = r.id
-        LEFT JOIN characteristics AS ch ON cr.characteristic_id = ch.id
-        WHERE r.product_id = ${product_id}
+          SUM(CASE WHEN recommend = false THEN 1 ELSE 0 END) AS recommend_false
+          FROM reviews
+          WHERE product_id = ${product_id};`
+      );
+      console.log(ratingQueryResult.rows);
+
+      oneStarCount = ratingQueryResult.rows[0].one_star_count;
+      twoStarCount = ratingQueryResult.rows[0].two_star_count;
+      threeStarCount = ratingQueryResult.rows[0].three_star_count;
+      fourStarCount = ratingQueryResult.rows[0].four_star_count;
+      fiveStarCount = ratingQueryResult.rows[0].five_star_count;
+      recommendTrue = ratingQueryResult.rows[0].recommend_true;
+      recommendFalse = ratingQueryResult.rows[0].recommend_false;
+
+      //get characteristics for specific product and avg value
+      const charQueryResult = await pool.query(`
+        SELECT ch.name AS name, AVG(cr.value) AS average_value, ch.id
+        FROM characteristics AS ch
+        JOIN characteristic_reviews AS cr ON cr.characteristic_id = ch.id
+        JOIN reviews AS r ON cr.review_id = r.id
+        WHERE r.product_id = '${product_id}'
+          AND ch.product_id = '${product_id}'
         GROUP BY ch.name, ch.id;
       `);
+      console.log(charQueryResult.rows);
 
-      const rows = queryResult.rows;
-      for (const row of rows) {
-        // Aggregate the star rating counts and recommend counts
-        if (row.one_star_count !== null) {
-          oneStarCount = row.one_star_count;
-          twoStarCount = row.two_star_count;
-          threeStarCount = row.three_star_count;
-          fourStarCount = row.four_star_count;
-          fiveStarCount = row.five_star_count;
-          recommendTrue = row.recommend_true;
-          recommendFalse = row.recommend_false;
-        }
-
-        // Create the characteristics object with average values
-        if (row.id !== null) {
-          charObj = charObj || {};
-          charObj[row.name] = {
-            id: row.id,
-            value: row.average_value,
-          };
-        }
-      }
+      const charNames = charQueryResult.rows;
+      charObj = {};
+      charNames.forEach((char) => {
+        charObj[char.name] = {
+          id: char.id,
+          value: char.average_value,
+        };
+      });
 
       return {
         oneStarCount,
@@ -91,6 +92,7 @@ const models = {
       throw error;
     }
   },
+
   postReview: (review) => {
     const { product_id, rating, summary, body, recommend, name, email } =
       review;
