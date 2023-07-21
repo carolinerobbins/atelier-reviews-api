@@ -5,6 +5,7 @@ const pool = new Pool({
   database: 'reviews',
   password: 'password',
   port: '5432',
+  port: '5432',
 })
 
 pool.connect((err, client, release) => {
