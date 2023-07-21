@@ -20,22 +20,7 @@ const controllers = {
     try {
       const { product_id } = req.query;
       const data = await models.getMeta(product_id);
-      let final = {
-        product_id: product_id,
-        ratings: {
-          '1' : data.oneStarCount,
-          '2' : data.twoStarCount,
-          '3' : data.threeStarCount,
-          '4' : data.fourStarCount,
-          '5' : data.fiveStarCount
-        },
-        recommended: {
-          true: data.recommendTrue,
-          false: data.recommendFalse
-        },
-        characteristics: data.charObj
-      }
-      res.send(final);
+      res.send(data);
     } catch (err) {
       res.status(501).send('Cannot get meta review data')
     }

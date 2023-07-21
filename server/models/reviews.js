@@ -25,85 +25,120 @@ const models = {
   },
   getMeta: async (product_id) => {
     try {
-      let oneStarCount,
-        twoStarCount,
-        threeStarCount,
-        fourStarCount,
-        fiveStarCount;
-      let recommendTrue, recommendFalse;
-      let charObj;
-      console.log('inside models');
-      //get star rating counts and recommend counts
-      const ratingQueryResult = await pool.query(
-        `SELECT
-          SUM(CASE WHEN rating = 1 THEN 1 ELSE 0 END) AS one_star_count,
-          SUM(CASE WHEN rating = 2 THEN 1 ELSE 0 END) AS two_star_count,
-          SUM(CASE WHEN rating = 3 THEN 1 ELSE 0 END) AS three_star_count,
-          SUM(CASE WHEN rating = 4 THEN 1 ELSE 0 END) AS four_star_count,
-          SUM(CASE WHEN rating = 5 THEN 1 ELSE 0 END) AS five_star_count,
-          SUM(CASE WHEN recommend = true THEN 1 ELSE 0 END) AS recommend_true,
-          SUM(CASE WHEN recommend = false THEN 1 ELSE 0 END) AS recommend_false
+      const query = `
+        SELECT
+          json_build_object(
+            'product_id', ${product_id},
+            'ratings', json_build_object(
+              '1', SUM(CASE WHEN rating = 1 THEN 1 ELSE 0 END),
+              '2', SUM(CASE WHEN rating = 2 THEN 1 ELSE 0 END),
+              '3', SUM(CASE WHEN rating = 3 THEN 1 ELSE 0 END),
+              '4', SUM(CASE WHEN rating = 4 THEN 1 ELSE 0 END),
+              '5', SUM(CASE WHEN rating = 5 THEN 1 ELSE 0 END)
+            ),
+            'recommended', json_build_object(
+              'true', SUM(CASE WHEN recommend = true THEN 1 ELSE 0 END),
+              'false', SUM(CASE WHEN recommend = false THEN 1 ELSE 0 END)
+            ),
+            'characteristics', json_object_agg(
+              ch.name,
+              json_build_object(
+                'id', ch.id,
+                'value', AVG(cr.value)
+              )
+            )
+          ) AS meta
+        FROM reviews r
+        LEFT JOIN characteristic_reviews cr ON cr.review_id = r.id
+        LEFT JOIN characteristics ch ON ch.id = cr.characteristic_id
+        WHERE r.product_id = ${product_id}
+        GROUP BY r.product_id;
+      `;
+
+      const queryResult = await pool.query(query);
+      const { meta } = queryResult.rows[0];
+      console.log(meta);
+      return meta;
+    } catch (error) {
+      console.error(error);
+      throw error;
+    }
+  },
+  getMeta: async (product_id) => {
+    try {
+      const query = `
+        WITH rating_counts AS (
+          SELECT
+            SUM(CASE WHEN rating = 1 THEN 1 ELSE 0 END) AS one_star_count,
+            SUM(CASE WHEN rating = 2 THEN 1 ELSE 0 END) AS two_star_count,
+            SUM(CASE WHEN rating = 3 THEN 1 ELSE 0 END) AS three_star_count,
+            SUM(CASE WHEN rating = 4 THEN 1 ELSE 0 END) AS four_star_count,
+            SUM(CASE WHEN rating = 5 THEN 1 ELSE 0 END) AS five_star_count
           FROM reviews
-          WHERE product_id = ${product_id};`
-      );
-      console.log(ratingQueryResult.rows);
+          WHERE product_id = ${product_id}
+        ),
+        recommend_counts AS (
+          SELECT
+            SUM(CASE WHEN recommend = true THEN 1 ELSE 0 END) AS recommend_true,
+            SUM(CASE WHEN recommend = false THEN 1 ELSE 0 END) AS recommend_false
+          FROM reviews
+          WHERE product_id = ${product_id}
+        ),
+        characteristic_data AS (
+          SELECT
+            ch.name,
+            AVG(cr.value) AS average_value,
+            ch.id
+          FROM characteristics AS ch
+          JOIN characteristic_reviews AS cr ON cr.characteristic_id = ch.id
+          JOIN reviews AS r ON cr.review_id = r.id
+          WHERE r.product_id = ${product_id}
+            AND ch.product_id = ${product_id}
+          GROUP BY ch.name, ch.id
+        )
+        SELECT
+          json_build_object(
+            'product_id', ${product_id},
+            'ratings', (
+              SELECT json_build_object(
+                '1', one_star_count,
+                '2', two_star_count,
+                '3', three_star_count,
+                '4', four_star_count,
+                '5', five_star_count
+              )
+              FROM rating_counts
+            ),
+            'recommended', (
+              SELECT json_build_object(
+                'true', recommend_true,
+                'false', recommend_false
+              )
+              FROM recommend_counts
+            ),
+            'characteristics', (
+              SELECT json_object_agg(
+                cd.name,
+                json_build_object(
+                  'id', cd.id,
+                  'value', cd.average_value
+                )
+              )
+              FROM characteristic_data cd
+            )
+          ) AS meta;
+      `;
 
-      oneStarCount = ratingQueryResult.rows[0].one_star_count;
-      twoStarCount = ratingQueryResult.rows[0].two_star_count;
-      threeStarCount = ratingQueryResult.rows[0].three_star_count;
-      fourStarCount = ratingQueryResult.rows[0].four_star_count;
-      fiveStarCount = ratingQueryResult.rows[0].five_star_count;
-      recommendTrue = ratingQueryResult.rows[0].recommend_true;
-      recommendFalse = ratingQueryResult.rows[0].recommend_false;
+      const queryResult = await pool.query(query);
+      const { meta } = queryResult.rows[0];
 
-      //get characteristics for specific product and avg value
-      const charQueryResult = await pool.query(`
-        SELECT ch.name AS name, AVG(cr.value) AS average_value, ch.id
-        FROM characteristics AS ch
-        JOIN characteristic_reviews AS cr ON cr.characteristic_id = ch.id
-        JOIN reviews AS r ON cr.review_id = r.id
-        WHERE r.product_id = '${product_id}'
-          AND ch.product_id = '${product_id}'
-        GROUP BY ch.name, ch.id;
-      `);
-      console.log(charQueryResult.rows);
-
-      const charNames = charQueryResult.rows;
-      charObj = {};
-      charNames.forEach((char) => {
-        charObj[char.name] = {
-          id: char.id,
-          value: char.average_value,
-        };
-      });
-
-      return {
-        oneStarCount,
-        twoStarCount,
-        threeStarCount,
-        fourStarCount,
-        fiveStarCount,
-        recommendTrue,
-        recommendFalse,
-        charObj,
-      };
+      return meta;
     } catch (error) {
       console.error(error);
       throw error;
     }
   },
 
-  postReview: (review) => {
-    const { product_id, rating, summary, body, recommend, name, email } =
-      review;
-    const date = new Date().getTime();
-    const reviewer_name = name;
-    const reviewer_email = email;
-
-    return pool.query(
-      `INSERT INTO reviews (product_id, rating, summary, body, recommend, reported, reviewer_name, reviewer_email, response, helpfulness, date) VALUES ('${product_id}', '${rating}', '${summary}', '${body}', ${recommend}, false, '${reviewer_name}', '${reviewer_email}', null, 0, ${date}) RETURNING id`
-    );
-  },
   putHelpful: (review_id) => {
     return pool.query(
       `UPDATE reviews SET helpfulness = (helpfulness + 1) WHERE id='${review_id}'`
