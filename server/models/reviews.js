@@ -67,70 +67,26 @@ const models = {
   getMeta: async (product_id) => {
     try {
       const query = `
-        WITH rating_counts AS (
-          SELECT
-            SUM(CASE WHEN rating = 1 THEN 1 ELSE 0 END) AS one_star_count,
-            SUM(CASE WHEN rating = 2 THEN 1 ELSE 0 END) AS two_star_count,
-            SUM(CASE WHEN rating = 3 THEN 1 ELSE 0 END) AS three_star_count,
-            SUM(CASE WHEN rating = 4 THEN 1 ELSE 0 END) AS four_star_count,
-            SUM(CASE WHEN rating = 5 THEN 1 ELSE 0 END) AS five_star_count
-          FROM reviews
-          WHERE product_id = ${product_id}
-        ),
-        recommend_counts AS (
-          SELECT
-            SUM(CASE WHEN recommend = true THEN 1 ELSE 0 END) AS recommend_true,
-            SUM(CASE WHEN recommend = false THEN 1 ELSE 0 END) AS recommend_false
-          FROM reviews
-          WHERE product_id = ${product_id}
-        ),
-        characteristic_data AS (
-          SELECT
-            ch.name,
-            AVG(cr.value) AS average_value,
-            ch.id
-          FROM characteristics AS ch
-          JOIN characteristic_reviews AS cr ON cr.characteristic_id = ch.id
-          JOIN reviews AS r ON cr.review_id = r.id
-          WHERE r.product_id = ${product_id}
-            AND ch.product_id = ${product_id}
-          GROUP BY ch.name, ch.id
-        )
         SELECT
+          product_id,
           json_build_object(
-            'product_id', ${product_id},
-            'ratings', (
-              SELECT json_build_object(
-                '1', one_star_count,
-                '2', two_star_count,
-                '3', three_star_count,
-                '4', four_star_count,
-                '5', five_star_count
-              )
-              FROM rating_counts
-            ),
-            'recommended', (
-              SELECT json_build_object(
-                'true', recommend_true,
-                'false', recommend_false
-              )
-              FROM recommend_counts
-            ),
-            'characteristics', (
-              SELECT json_object_agg(
-                cd.name,
-                json_build_object(
-                  'id', cd.id,
-                  'value', cd.average_value
-                )
-              )
-              FROM characteristic_data cd
-            )
-          ) AS meta;
+            '1', one_star_count,
+            '2', two_star_count,
+            '3', three_star_count,
+            '4', four_star_count,
+            '5', five_star_count
+          ) AS ratings,
+          json_build_object(
+            'true', recommend_true,
+            'false', recommend_false
+          ) AS recommended,
+          characteristic_data
+        FROM meta_aggregations
+        WHERE product_id = ${product_id};
       `;
 
       const queryResult = await pool.query(query);
-      const { meta } = queryResult.rows[0];
+      const meta = queryResult.rows[0];
 
       return meta;
     } catch (error) {
